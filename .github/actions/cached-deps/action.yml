@@ -1,12 +1,18 @@
 name: 'Get & Cache Dependencies'
 description: "Get the dependencies (via npm) and cache them"
 
-# adding inputs
+# adding inputs :: to be used in this workflow jobs
 inputs:
   caching:
     description: 'Whether to cache dependencies or not'
     required: false
     default: 'true'
+
+# to be used in external workflow jobs
+outputs:
+  used-cache:
+    description: 'Whether the cache was used'
+    value: ${{steps.install.outputs.cache}}
 
 runs:
   using: "composite"
@@ -19,6 +25,9 @@ runs:
         path: node_modules
         key: deps-node-modules-${{ hashFiles('**/package-lock.json') }}
     - name: Install dependencies
+      id: install
       if: steps.cache.outputs.cache-hit != 'true' || inputs.caching != true
-      run: npm ci
+      run: |
+        npm ci
+        echo "::set-output name=cache::'${{inputs.caching}}'"
       shell: bash
